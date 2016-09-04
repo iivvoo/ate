@@ -92,15 +92,21 @@ class ExpressionNode(Node):
         return "Statement node ----\n{}\n----\n".format(self.code)
 
 
-class BlockStatementNode(Node):
+class StatementNode(Node):
     open = ''
-    closing = ''
 
-    def __init__(self, code, type, expression, nodes):
+    def __init__(self, code, type, expression=""):
         super().__init__(code)
         self.type = type
         self.expression = expression
-        self.nodes = nodes
+
+
+class BlockStatementNode(StatementNode):
+    closing = ''
+
+    def __init__(self, code, type, expression="", nodes=None):
+        super().__init__(code, type, expression)
+        self.nodes = nodes or []
 
     def render(self, context):
         # The blockstatement itself will probably render to nothing
@@ -116,6 +122,10 @@ class BlockStatementNode(Node):
 
     def __iter__(self):
         return self.nodes
+
+
+class MainNode(BlockStatementNode):
+    pass
 
 
 class ForBlockStatementNode(BlockStatementNode):
@@ -246,18 +256,17 @@ class Template:
 
     def __init__(self, code):
         self.code = code
-        self.compiled = self.compile()
+        self.mainnode = self.compile()
         self.rendered = []
 
     def compile(self):
-        return compile(self.code)[0]
+        nodes, skip = compile(self.code)
+        node = MainNode(self.code, type="main", nodes=nodes)
+        return node
 
     def render_nested(self, **data):
         context = Context(data)
-        res = []
-        for n in self.compiled:
-            res.append(n.render(context))
-        return res
+        return self.mainnode.render(context)
 
     def render(self, **data):
         return flatten(self.render_nested(**data))
