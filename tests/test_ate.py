@@ -2,7 +2,7 @@ from ate.ate import Template
 from ate.ate import CompileStatement
 from ate.ate import TextNode
 from ate.ate import compile
-from ate.ate import StatementNode
+from ate.ate import ExpressionNode
 from ate.ate import BlockStatementNode
 
 
@@ -27,7 +27,7 @@ class TestMyTpl:
         tpl = "{{hello}}"
         res, skip = CompileStatement(tpl)
         assert skip == len(tpl)
-        assert isinstance(res, StatementNode)
+        assert isinstance(res, ExpressionNode)
         assert res.code == "{{hello}}"
 
     def test_block(self):

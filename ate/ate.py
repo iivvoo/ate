@@ -28,7 +28,6 @@ TODO:
 
 """
 import re
-import pprint
 
 from simpleeval import SimpleEval
 
@@ -83,7 +82,7 @@ class TextNode(Node):
         return "Text node ----\n{}\n----\n".format(self.code)
 
 
-class StatementNode(Node):
+class ExpressionNode(Node):
 
     def render(self, context):
         expr = self.code[2:-2]  # remove {{ }}
@@ -172,7 +171,7 @@ def CompileStatement(code):
         raise ParseError("Closing } missing")
     if code[1] == '{':  # non-block statement
         # assume } follows closing } -> +2
-        return StatementNode(code[:end + 2]), end + 2
+        return ExpressionNode(code[:end + 2]), end + 2
 
     # assume it's {%. Adjust end to compensate for
     # closing %
