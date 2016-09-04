@@ -1,15 +1,30 @@
 """
 
-Templates parseren
+nomenclature (taken from jinja2):
+{{ }} expression
+{% something %} statement. May not always have a block
+ (e.g. extends, include)
+ may have specific sub statements
 
-Je hebt text, block statements {% if %} en expressies {{ }}
-(block statements kunnen ook blockless zijn, dat is dan
-afhankelijk van het type)
+There are two constructs:
 
-Door de template zelf in een {% start %} .. {% endstart %} block
-te wrappen kan je stellen dat de template begint met een block.
-Je leest het blocktype, parseert de body en geeft aan wanneer
-parsering moet stoppen
+Simple statements, {{ expr }} and blockstatements
+{%if expr %} .. {%endif%}
+
+But what's {%else%} in such a construct? It can be considered
+a "blockless blockstatement" (so no "endelse")
+
+{%else%} does not exist outside an if statement. It may exist
+in for example a for statement
+
+
+TODO:
+
+- rename
+- expressions, statements
+- {%else%}
+- {# comments #}
+- sensible error reports
 
 """
 import re
@@ -139,7 +154,15 @@ blockstatements = {'for': ForBlockStatementNode,
                    'if': IfBlockStatementNode}
 
 
-class ParseError(Exception):
+class ATEException(Exception):
+    pass
+
+
+class ParseError(ATEException):
+    pass
+
+
+class StatementNotFound(ATEException):
     pass
 
 
@@ -156,7 +179,12 @@ def CompileStatement(code):
     statement = code[2:end - 1].strip()
     main, _, expr = statement.partition(" ")
 
-    klass = blockstatements.get(main)
+    try:
+        klass = blockstatements[main]
+    except KeyError:
+        raise StatementNotFound(
+            "Statement {} not implemented".format(main))
+
     # 'main' cannot start with 'end'
     # (or should we make it more explicit using /for?)
     # import pdb;pdb.set_trace()
