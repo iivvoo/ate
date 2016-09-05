@@ -114,7 +114,7 @@ class StatementNode(Node):
 
 
 class BlockStatementNode(StatementNode):
-    closing = ''
+    closing = None
 
     def __init__(self, type, expression="", nodes=None, parent=None):
         super().__init__(type, expression, parent=parent)

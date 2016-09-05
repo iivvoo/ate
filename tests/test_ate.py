@@ -3,24 +3,26 @@ from ate.ate import CompileStatement
 from ate.ate import TextNode
 from ate.ate import ExpressionNode
 from ate.ate import BlockStatementNode
+from ate.ate import MainNode
+from ate.ate import ForBlockStatementNode
 
 
 class TestMyTpl:
 
-    def xtest_empty(self):
-        res, skip = compile("")
-        assert skip == 0
-        assert len(res) == 0
+    def test_empty(self):
+        template = Template("")
+        assert isinstance(template.mainnode, MainNode)
+        assert len(template.mainnode.nodes) == 0
 
-    def xtest_multiline(self):
+    def test_multiline(self):
         tpl = """Hello
         world
 
         bye!"""
-        res, skip = compile(tpl)
-        assert skip == len(tpl)
-        assert isinstance(res[0], TextNode)
-        assert res[0].code == tpl
+        template = Template(tpl)
+        assert isinstance(template.mainnode, MainNode)
+        assert isinstance(template.mainnode.nodes[0], TextNode)
+        assert template.mainnode.nodes[0].text == tpl
 
     def test_statement(self):
         tpl = "{{hello}}"
@@ -52,36 +54,42 @@ class TestMyTpl:
 
         That's all!"""
         # import pdb; pdb.set_trace()
-        res, skip = compile(tpl)
-        assert skip == len(tpl)
-        assert len(res) == 3
-        assert isinstance(res[0], TextNode)
-        assert isinstance(res[1], BlockStatementNode)
-        assert isinstance(res[2], TextNode)
+        t = Template(tpl)
+        assert len(t.mainnode.nodes) == 3
+        nodes = t.mainnode.nodes
+        assert isinstance(nodes[0], TextNode)
+        assert isinstance(nodes[1], BlockStatementNode)
+        assert isinstance(nodes[2], TextNode)
 
     def test_closing_spacing(self):
-        res, skip = compile("{%for%}{%endfor%}")
-        assert len(res) == 1
+        tn = ForBlockStatementNode("for")
+        index = tn.compile("{%for%}{%endfor%}", len("{%for%}"))
+        assert index == 17
 
     def test_closing_spacing2(self):
-        res, skip = compile("{%for%}{% endfor%}")
-        assert len(res) == 1
+        tn = ForBlockStatementNode("for")
+        index = tn.compile("{%for%}{% endfor%}", len("{%for%}"))
+        assert index == 18
 
     def test_closing_spacing3(self):
-        res, skip = compile("{%for%}{%  endfor%}")
-        assert len(res) == 1
+        tn = ForBlockStatementNode("for")
+        index = tn.compile("{%for%}{%  endfor%}", len("{%for%}"))
+        assert index == 19
 
     def test_closing_spacing4(self):
-        res, skip = compile("{%for%}{%endfor %}")
-        assert len(res) == 1
+        tn = ForBlockStatementNode("for")
+        index = tn.compile("{%for%}{%endfor %}", len("{%for%}"))
+        assert index == 18
 
     def test_closing_spacing5(self):
-        res, skip = compile("{%for%}{%endfor  %}")
-        assert len(res) == 1
+        tn = ForBlockStatementNode("for")
+        index = tn.compile("{%for%}{%endfor  %}", len("{%for%}"))
+        assert index == 19
 
     def test_closing_spacing6(self):
-        res, skip = compile("{%for%}{%  endfor  %}")
-        assert len(res) == 1
+        tn = ForBlockStatementNode("for")
+        index = tn.compile("{%for%}{%  endfor  %}", len("{%for%}"))
+        assert index == 21
 
 
 class TestTemplateRender:
@@ -133,6 +141,7 @@ class TestForBlock:
 class TestIfBlock:
 
     def test_simple(self):
+        # import pdb; pdb.set_trace()
         tpl = Template("{%if bool%}TRUE{%endif%}")
         assert tpl.render(bool=True) == "TRUE"
         assert tpl.render(bool=False) == ""
