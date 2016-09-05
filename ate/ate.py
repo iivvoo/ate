@@ -66,8 +66,9 @@ class Context:
 
 class Node:
 
-    def __init__(self, code):
-        self.code = code
+    def __init__(self, parent=None):
+        self.code = None
+        self.parent = parent
 
     def render(self, context):
         return self.code
@@ -78,25 +79,36 @@ class Node:
 
 class TextNode(Node):
 
+    def __init__(self, text, parent=None):
+        super().__init__(parent=parent)
+        self.text = text
+ 
+    def render(self, context):
+        return self.text
+
     def __str__(self):
-        return "Text node ----\n{}\n----\n".format(self.code)
+        return "Text node ----\n{}\n----\n".format(self.text)
 
 
 class ExpressionNode(Node):
-
+    def __init__(self, expression, parent=None):
+        super().__init__(parent=parent)
+        # should {{ }} be removed from expression already?
+        self.expression = expression
+ 
     def render(self, context):
-        expr = self.code[2:-2]  # remove {{ }}
+        expr = self.expression[2:-2]  # remove {{ }}
         return str(context.eval(expr))
 
     def __str__(self):
-        return "Statement node ----\n{}\n----\n".format(self.code)
+        return "Statement node ----\n{}\n----\n".format(self.expression)
 
 
 class StatementNode(Node):
     open = ''
 
-    def __init__(self, code, type, expression=""):
-        super().__init__(code)
+    def __init__(self, type, expression="", parent=None):
+        super().__init__(parent=parent)
         self.type = type
         self.expression = expression
 
@@ -104,8 +116,8 @@ class StatementNode(Node):
 class BlockStatementNode(StatementNode):
     closing = ''
 
-    def __init__(self, code, type, expression="", nodes=None):
-        super().__init__(code, type, expression)
+    def __init__(self, type, expression="", nodes=None, parent=None):
+        super().__init__(type, expression, parent=parent)
         self.nodes = nodes or []
 
     def render(self, context):
@@ -122,6 +134,41 @@ class BlockStatementNode(StatementNode):
 
     def __iter__(self):
         return self.nodes
+
+    def compile(self, code, index=0):
+        """ Wrap nodes in MainNode or something? """
+        res = []
+        closing = self.closing
+        closing_found = closing is None
+
+        while index < len(code):
+            first_marker = code[index:].find('{')
+            if first_marker == -1:
+                res.append(TextNode(code[index:]))
+                index = len(code)
+                break
+
+            if first_marker > 0:
+                # Is there any text to put in a node?
+                res.append(TextNode(code[index:index + first_marker]))
+                index += first_marker
+
+            if closing and re.match("{{%\s*{}\s*%}}".format(closing),
+                                    code[index:]):
+                closing_found = True
+                index += code[index:].find("%}") + 2
+                break
+
+            node, skip = CompileStatement(code[index:])
+            res.append(node)
+            index += skip
+
+        if not closing_found:
+            raise ParseError("Closing tag {} not found".format(closing))
+
+        self.nodes = res
+        self.code = code[:index]
+        return index
 
 
 class MainNode(BlockStatementNode):
@@ -198,46 +245,16 @@ def CompileStatement(code):
     # (or should we make it more explicit using /for?)
     # import pdb;pdb.set_trace()
 
-    nodes, skip = compile(code[end + 1:], closing=klass.closing)
+    # nodes, skip = compile(code[end + 1:], closing=klass.closing)
     # delegate compile to BlockStatementNode? Or is this method
     # BlockStatementNode?
-    node = klass(code[:end + 1 + skip], main, expr, nodes)
+    # node = klass(code[:end + 1 + skip], main, expr, nodes)
+
+    node = klass(main, expr)
+    end = node.compile(code, end + 1)
 
     # No node is inserted, it purely returns body
-    return node, end + 1 + skip
-
-
-def compile(code, closing=None):
-    """ Wrap nodes in MainNode or something? """
-    index = 0
-    res = []
-    closing_found = closing is None
-
-    while index < len(code):
-        first_marker = code[index:].find('{')
-        if first_marker == -1:
-            res.append(TextNode(code[index:]))
-            index = len(code)
-            break
-
-        if first_marker > 0:
-            # Is there any text to put in a node?
-            res.append(TextNode(code[index:index + first_marker]))
-            index += first_marker
-
-        if closing and re.match("{{%\s*{}\s*%}}".format(closing),
-                                code[index:]):
-            closing_found = True
-            index += code[index:].find("%}") + 2
-            break
-
-        node, skip = CompileStatement(code[index:])
-        res.append(node)
-        index += skip
-
-    if not closing_found:
-        raise ParseError("Closing tag {} not found".format(closing))
-    return res, index
+    return node, end 
 
 
 def flatten(l):
@@ -260,8 +277,8 @@ class Template:
         self.rendered = []
 
     def compile(self):
-        nodes, skip = compile(self.code)
-        node = MainNode(self.code, type="main", nodes=nodes)
+        node = MainNode(type="main")
+        node.compile(self.code)
         return node
 
     def render_nested(self, **data):
