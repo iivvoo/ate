@@ -146,7 +146,8 @@ class TestIfBlock:
         assert tpl.render(bool=True) == "TRUE"
         assert tpl.render(bool=False) == ""
 
-    def xtest_else(self):
+    def test_else(self):
+        # import pdb; pdb.set_trace()
         tpl = Template("{%if bool%}TRUE{%else%}FALSE{%endif%}")
         assert tpl.render(bool=True) == "TRUE"
         assert tpl.render(bool=False) == "FALSE"

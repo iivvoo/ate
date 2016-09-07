@@ -82,7 +82,7 @@ class TextNode(Node):
     def __init__(self, text, parent=None):
         super().__init__(parent=parent)
         self.text = text
- 
+
     def render(self, context):
         return self.text
 
@@ -91,11 +91,12 @@ class TextNode(Node):
 
 
 class ExpressionNode(Node):
+
     def __init__(self, expression, parent=None):
         super().__init__(parent=parent)
         # should {{ }} be removed from expression already?
         self.expression = expression
- 
+
     def render(self, context):
         expr = self.expression[2:-2]  # remove {{ }}
         return str(context.eval(expr))
@@ -115,6 +116,7 @@ class StatementNode(Node):
 
 class BlockStatementNode(StatementNode):
     closing = None
+    has_block = True
 
     def __init__(self, type, expression="", nodes=None, parent=None):
         super().__init__(type, expression, parent=parent)
@@ -159,7 +161,7 @@ class BlockStatementNode(StatementNode):
                 index += code[index:].find("%}") + 2
                 break
 
-            node, skip = CompileStatement(code[index:])
+            node, skip = CompileStatement(code[index:], parent=self)
             res.append(node)
             index += skip
 
@@ -201,13 +203,36 @@ class IfBlockStatementNode(BlockStatementNode):
 
     def render(self, context):
         res = []
+        t, f = [], []
+
+        current = t
+        for node in self.nodes:
+            if isinstance(node, ElseInIfStatement):
+                current = f
+            else:
+                current.append(node)
+
         if context.eval(self.expression):
-            for node in self.nodes:
+            for node in t:
+                res.append(node.render(context))
+        else:
+            for node in f:
                 res.append(node.render(context))
         return res
 
+
+class ElseInIfStatement(BlockStatementNode):  # actually not a BlockStatement!
+    open = 'else'
+    closing = None
+    has_block = False
+
+    def compile(self, code, index=0):
+        """ there is nothing to compile """
+        return index
+
 blockstatements = {'for': ForBlockStatementNode,
-                   'if': IfBlockStatementNode}
+                   'if': IfBlockStatementNode,
+                   'else': ElseInIfStatement}
 
 
 class ATEException(Exception):
@@ -222,7 +247,7 @@ class StatementNotFound(ATEException):
     pass
 
 
-def CompileStatement(code):
+def CompileStatement(code, parent=None):
     end = code.find("}")
     if end == -1:
         raise ParseError("Closing } missing")
@@ -241,20 +266,11 @@ def CompileStatement(code):
         raise StatementNotFound(
             "Statement {} not implemented".format(main))
 
-    # 'main' cannot start with 'end'
-    # (or should we make it more explicit using /for?)
-    # import pdb;pdb.set_trace()
-
-    # nodes, skip = compile(code[end + 1:], closing=klass.closing)
-    # delegate compile to BlockStatementNode? Or is this method
-    # BlockStatementNode?
-    # node = klass(code[:end + 1 + skip], main, expr, nodes)
-
-    node = klass(main, expr)
+    node = klass(main, expr, parent=parent)
     end = node.compile(code, end + 1)
 
     # No node is inserted, it purely returns body
-    return node, end 
+    return node, end
 
 
 def flatten(l):
