@@ -1,14 +1,14 @@
 import pytest
 
 from ate.ate import Template
-from ate.ate import CompileStatement
-from ate.ate import TextNode
-from ate.ate import ExpressionNode
-from ate.ate import BlockStatementNode
-from ate.ate import MainNode
-from ate.ate import ForBlockStatementNode
+from ate.tags import CompileStatement
+from ate.tags import TextNode
+from ate.tags import ExpressionNode
+from ate.tags import BlockStatementNode
+from ate.tags import MainNode
+from ate.tags import ForBlockStatementNode
 
-from ate.ate import StatementNotAllowed
+from ate.exceptions import StatementNotAllowed
 
 
 class TestMyTpl:

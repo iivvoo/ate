@@ -1,8 +1,8 @@
 import pytest
 
-from ate.ate import Registry
-from ate.ate import StatementNotFound, StatementNotAllowed
-from ate.ate import MainNode, StatementNode
+from ate.registry import Registry
+from ate.exceptions import StatementNotFound, StatementNotAllowed
+from ate.tags import MainNode, StatementNode
 
 
 @pytest.fixture
