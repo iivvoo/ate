@@ -141,6 +141,16 @@ class TestForBlock:
         tpl = Template("{%for i in j%}{{i}}{%endfor%}{{i}}")
         assert tpl.render(i="z", j=["a"]) == "az"
 
+    def test_loop(self):
+        tpl = Template("{% for i in seq%}"
+                       "{%if loop.first%}{{i}} is first{%endif%}"
+                       "{%if loop.last%}{{i}} is last{%endif%}"
+                       "{{i}}{{loop.index}}-{{loop.index0}}"
+                       "{%endfor%}"
+                       )
+        res = tpl.render(seq="abcde")
+        assert res == "a is firsta0-1b1-2c2-3d3-4e is laste4-5"
+
 
 class TestIfBlock:
 

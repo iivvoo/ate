@@ -1,4 +1,5 @@
 import re
+from collections import namedtuple
 
 from .exceptions import ParseError
 from .registry import Registry
@@ -124,14 +125,21 @@ class ForBlockStatementNode(BlockStatementNode):
     open = 'for'
     closing = 'endfor'
 
+    def looper(self, sequence):
+        looptype = namedtuple("Loop", ["index", "index0", "first", "last"])
+        l = len(sequence)
+
+        for i, v in enumerate(sequence):
+            yield looptype(i, i + 1, i == 0, i == l - 1), v
+
     def render(self, context):
         var, _in, expr = self.expression.partition(" in ")
         var = var.strip()
         seq = context.eval(expr.strip())
 
         res = []
-        for element in seq:
-            context.push({var: element})
+        for loop, element in self.looper(seq):
+            context.push({var: element, 'loop': loop})
             for node in self.nodes:
                 res.append(node.render(context))
             context.pop()
@@ -172,7 +180,8 @@ registry = Registry()
 
 registry.register('for', ForBlockStatementNode, MainNode)
 registry.register('if', IfBlockStatementNode, MainNode)
-registry.register('else', ElseInIfStatementNode, IfBlockStatementNode, direct=True)
+registry.register('else', ElseInIfStatementNode,
+                  IfBlockStatementNode, direct=True)
 # registry.register('else', ForBlockStatementNode, direct=True)
 
 
