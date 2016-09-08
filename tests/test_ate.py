@@ -1,3 +1,5 @@
+import pytest
+
 from ate.ate import Template
 from ate.ate import CompileStatement
 from ate.ate import TextNode
@@ -5,6 +7,8 @@ from ate.ate import ExpressionNode
 from ate.ate import BlockStatementNode
 from ate.ate import MainNode
 from ate.ate import ForBlockStatementNode
+
+from ate.ate import StatementNotAllowed
 
 
 class TestMyTpl:
@@ -141,13 +145,17 @@ class TestForBlock:
 class TestIfBlock:
 
     def test_simple(self):
-        # import pdb; pdb.set_trace()
         tpl = Template("{%if bool%}TRUE{%endif%}")
         assert tpl.render(bool=True) == "TRUE"
         assert tpl.render(bool=False) == ""
 
     def test_else(self):
-        # import pdb; pdb.set_trace()
         tpl = Template("{%if bool%}TRUE{%else%}FALSE{%endif%}")
         assert tpl.render(bool=True) == "TRUE"
         assert tpl.render(bool=False) == "FALSE"
+
+    def test_toplevel_else(self):
+        """ else cannot be used by itself """
+        with pytest.raises(StatementNotAllowed):
+            # import pdb; pdb.set_trace()
+            Template("{%else%}").render()

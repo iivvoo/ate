@@ -67,7 +67,7 @@ class Context:
 class Node:
 
     def __init__(self, parent=None):
-        self.code = None
+        self.code = ""
         self.parent = parent
 
     def render(self, context):
@@ -112,6 +112,9 @@ class StatementNode(Node):
         super().__init__(parent=parent)
         self.type = type
         self.expression = expression
+
+    def compile(self, code, index=0):
+        return index
 
 
 class BlockStatementNode(StatementNode):
@@ -221,18 +224,52 @@ class IfBlockStatementNode(BlockStatementNode):
         return res
 
 
-class ElseInIfStatement(BlockStatementNode):  # actually not a BlockStatement!
+class ElseInIfStatement(StatementNode):
+    """ Should only be allowed inside if blockstatement """
     open = 'else'
-    closing = None
-    has_block = False
 
-    def compile(self, code, index=0):
-        """ there is nothing to compile """
-        return index
 
 blockstatements = {'for': ForBlockStatementNode,
                    'if': IfBlockStatementNode,
                    'else': ElseInIfStatement}
+
+
+class Registry:
+
+    def __init__(self):
+        self._reg = []
+
+    def register(self, tagname, tagclass, parent, direct=False):
+        self._reg.append((tagname, tagclass, parent, direct))
+
+    def find(self, tag, node):
+        any_found = False
+
+        for tagname, nodeclass, parent, direct in self._reg:
+            if tagname == tag:
+                any_found = True
+                if node.__class__ == parent:
+                    return nodeclass
+                if direct:
+                    continue  # must be direct, don't look further 
+                n = node
+                while n.parent:
+                    if n.parent.__class__ == parent:
+                        return nodeclass
+                    n = n.parent
+
+        if any_found:
+            # the tag exists but is not allowed in a specific context
+            raise StatementNotAllowed(tag)
+        raise StatementNotFound(tag)
+
+
+registry = Registry()
+
+registry.register('for', ForBlockStatementNode, MainNode)
+registry.register('if', IfBlockStatementNode, MainNode)
+registry.register('else', ElseInIfStatement, IfBlockStatementNode, direct=True)
+# registry.register('else', ForBlockStatementNode, direct=True)
 
 
 class ATEException(Exception):
@@ -244,6 +281,10 @@ class ParseError(ATEException):
 
 
 class StatementNotFound(ATEException):
+    pass
+
+
+class StatementNotAllowed(ATEException):
     pass
 
 
