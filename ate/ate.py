@@ -229,10 +229,6 @@ class ElseInIfStatement(StatementNode):
     open = 'else'
 
 
-blockstatements = {'for': ForBlockStatementNode,
-                   'if': IfBlockStatementNode,
-                   'else': ElseInIfStatement}
-
 
 class Registry:
 
@@ -289,6 +285,7 @@ class StatementNotAllowed(ATEException):
 
 
 def CompileStatement(code, parent=None):
+    parent = parent or MainNode("main")
     end = code.find("}")
     if end == -1:
         raise ParseError("Closing } missing")
@@ -301,11 +298,7 @@ def CompileStatement(code, parent=None):
     statement = code[2:end - 1].strip()
     main, _, expr = statement.partition(" ")
 
-    try:
-        klass = blockstatements[main]
-    except KeyError:
-        raise StatementNotFound(
-            "Statement {} not implemented".format(main))
+    klass = registry.find(main, parent)
 
     node = klass(main, expr, parent=parent)
     end = node.compile(code, end + 1)
