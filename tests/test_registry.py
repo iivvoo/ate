@@ -167,6 +167,12 @@ class TestTagRegistry:
         """
             The else statement makes sense for both For and If, but only
             directly
+
+            {%main%}
+              {%if%}
+                {%else%}
+              {%for%}
+                {%else%}
         """
         class IfStatementNode(StatementNode):
             pass
