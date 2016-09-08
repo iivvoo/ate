@@ -157,5 +157,4 @@ class TestIfBlock:
     def test_toplevel_else(self):
         """ else cannot be used by itself """
         with pytest.raises(StatementNotAllowed):
-            # import pdb; pdb.set_trace()
             Template("{%else%}").render()

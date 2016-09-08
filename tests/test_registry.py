@@ -93,7 +93,7 @@ class TestTagRegistry:
             pass
 
         m = MainNode("main")
-        b = BarStatementNode("bar", parent=m)
+        BarStatementNode("bar", parent=m)
 
         registry.register("foo", FooStatementNode, BarStatementNode)
         registry.register("bar", BarStatementNode, MainNode)

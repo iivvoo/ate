@@ -229,7 +229,6 @@ class ElseInIfStatement(StatementNode):
     open = 'else'
 
 
-
 class Registry:
 
     def __init__(self):
@@ -247,7 +246,7 @@ class Registry:
                 if node.__class__ == parent:
                     return nodeclass
                 if direct:
-                    continue  # must be direct, don't look further 
+                    continue  # must be direct, don't look further
                 n = node
                 while n.parent:
                     if n.parent.__class__ == parent:
