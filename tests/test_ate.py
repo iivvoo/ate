@@ -168,3 +168,46 @@ class TestIfBlock:
         """ else cannot be used by itself """
         with pytest.raises(StatementNotAllowed):
             Template("{%else%}").render()
+
+@pytest.mark.skip
+class TestInheritance:
+    def test_simple(self):
+        """
+            Assume base/extended template definition is defined outside
+            of template. So no need for {% extend %}
+
+            Use defaults. {%content%} means the defaul ("main"?) content block
+            a template without an explicit block will render into the default
+            block.
+
+            Multiple slots / blocks (and proper extending) should be supported
+            eventually but the simplest cases first
+        """
+        base = Template("HEAD {%content%}xxx{%endcontent%} FOOTER")
+        final = base.Template("This is the body")
+        res = final.renderInto(base)
+        assert res == "HEAD This is the body FOOTER"
+
+    def test_explicit1(self):
+        base = Template("HEAD {%content main%}xxx{%endcontent%} FOOTER")
+        final = base.Template("This is the body", block="main")
+        res = final.renderInto(base)
+        assert res == "HEAD This is the body FOOTER"
+
+    def test_explicit2(self):
+        base = Template("HEAD {%content main%}xxx{%endcontent%} FOOTER")
+        final = base.Template("{%block main%}This is the body{%endblock%}",)
+        res = final.renderInto(base)
+        assert res == "HEAD This is the body FOOTER"
+
+    def test_nondefault(self):
+        base = Template("HEAD {%content foo%}xxx{%endcontent%} FOOTER")
+        final = base.Template("This is the body", block="foo")
+        res = final.renderInto(base)
+        assert res == "HEAD This is the body FOOTER"
+
+    def test_missing(self):
+        base = Template("HEAD {%content foo%}xxx{%endcontent%} FOOTER")
+        final = base.Template("This is the body", block="main")
+        res = final.renderInto(base)
+        assert res == "HEAD xxx FOOTER"
