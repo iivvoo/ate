@@ -1,3 +1,5 @@
+import pytest
+
 from ate.ate import Template
 from ate.tags import CompileStatement
 from ate.tags import TextNode
@@ -6,6 +8,8 @@ from ate.tags import BlockStatementNode
 from ate.tags import MainNode
 from ate.tags import ForBlockStatementNode
 from ate.tags import parse_expression
+from ate.exceptions import ParseError
+
 
 class TestMyTpl:
 
@@ -126,11 +130,11 @@ class TestStatementEval:
         tpl = Template("{{'hello'}}")
         assert tpl.render() == 'hello'
 
-    def xtest_string_expression_specialx(self):
+    def test_string_expression_specialx(self):
         tpl = Template("{{'{{hello}}'}}")
         assert tpl.render() == '{{hello}}'
 
-    def xtest_string_expression_special2(self):
+    def test_string_expression_special2(self):
         tpl = Template("{{'{%hello%}'}}")
         assert tpl.render() == '{%hello%}'
 
@@ -156,3 +160,33 @@ class TestExpressionParser:
         res, index = parse_expression("{{'}}'}}")
         assert res == "'}}'"
         assert index == 8
+
+    def test_trailing(self):
+        res, index = parse_expression("{{123}} whatever")
+        assert res == "123"
+        assert index == 7
+
+    def test_close_error(self):
+        with pytest.raises(ParseError):
+            res, index = parse_expression("{{123}")
+
+    def test_close_missing(self):
+        with pytest.raises(ParseError):
+            res, index = parse_expression("{{123")
+
+    def test_handlebars_in_exp(self):
+        """ This is valid, it's up to simpleeval to choke on it.
+            We might reject it explicitly, perhaps?
+        """
+        res, index = parse_expression("{{ {{ }}")
+        assert res == " {{ "
+        assert index == 8
+
+    def test_handlebars_in_remainder(self):
+        """ This is valid, the remainder will be treated as
+            ordinary text since }} has no special meaning if not
+            preceeded by {{
+        """
+        res, index = parse_expression("{{ }} }}")
+        assert res == " "
+        assert index == 5
