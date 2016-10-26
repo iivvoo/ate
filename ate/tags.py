@@ -217,13 +217,14 @@ registry.register('slot', SlotStatementNode, MainNode)
 registry.register('fill', FillBlockStatementNode, MainNode)
 
 
-def parse_expression(code):
-    """ parse {{ }} expression. Assume it still starts with
-        {{ and ends with }}, may contain trailing code.
+def parse_expression(code, start="{{", end="}}"):
+    """ parse any expression surrounded by start/end,
+        supporting string expressions containing start/end
+        markers. Code may contain trailing code
 
-        return index where parsing ends including parsing of }}
+        return index where parsing ends including parsing of endmarker
     """
-    assert code[:2] == '{{'
+    assert code[:2] == start
 
     escape_mode = False
     string_mode = ''  # can be ' " or empty
@@ -244,14 +245,23 @@ def parse_expression(code):
         elif c in "'\"":
             string_mode = c
 
-        elif code[index:index + 2] == "}}":
-            # }} ends the expression and we're not inside a string
-            index += 1  # we read one } ahead
+        elif code[index:index + 2] == end:
+            # 'end' ends the expression and we're not inside a string
+            index += 1  # we read one } ahead (assume end is 2 characters)
             break
         res += c
     else:
         raise ParseError("Closing }} not found")
-    return res, index+1
+    return res, index + 1
+
+
+def parse_statement(code):
+    """ parse
+        {% stmnt expr %}
+        where "expr" may contain a string containing '%}'
+    """
+    r = parse_expression(code, start='{%', end='%}')
+    return r
 
 
 def CompileStatement(code, parent=None):
@@ -263,19 +273,16 @@ def CompileStatement(code, parent=None):
     if code[1] == '{':  # expression statement
         expr, end = parse_expression(code)
         return ExpressionNode(expr), end
-    end = code.find("}")
-    if end == -1:
-        raise ParseError("Closing } missing")
 
-    # assume it's {%. Adjust end to compensate for
-    # closing %
-    statement = code[2:end - 1].strip()
+    statement, end = parse_statement(code)
+    statement = statement.strip()
+
     main, _, expr = statement.partition(" ")
 
     klass = registry.find(main, parent)
 
     node = klass(main, expr, parent=parent)
-    end = node.compile(code, end + 1)
+    end = node.compile(code, end)
 
     # No node is inserted, it purely returns body
     return node, end

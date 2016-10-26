@@ -37,7 +37,6 @@ class TestMyTpl:
 
     def test_block(self):
         tpl = "{% for i in abc%} x {% endfor %}"
-        # import pdb; pdb.set_trace()
         res, skip = CompileStatement(tpl)
         assert skip == len(tpl)
         assert isinstance(res, BlockStatementNode)
@@ -93,6 +92,11 @@ class TestMyTpl:
         tn = ForBlockStatementNode("for")
         index = tn.compile("{%for%}{%  endfor  %}", len("{%for%}"))
         assert index == 21
+
+    def test_close_marker_in_expr(self):
+        tpl = "{% for i in '%}' %} x {% endfor %}"
+        res, skip = CompileStatement(tpl)
+        assert res.expression == "i in '%}'"
 
 
 class TestTemplateRender:
