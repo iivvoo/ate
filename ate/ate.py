@@ -22,7 +22,6 @@ TODO:
 
 - sensible errors, line numbers
 - rename
-- {# comments #}
 
 """
 from simpleeval import SimpleEval

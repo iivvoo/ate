@@ -128,6 +128,7 @@ class TestMyTpl:
         assert isinstance(res, CommentNode)
         assert res.expression == " {{'hello'}} "
 
+
 class TestTemplateRender:
 
     def test_render_text(self):
