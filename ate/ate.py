@@ -72,7 +72,7 @@ class Context:
     @contextmanager
     def popchild(self):
         c = self.children.pop()
-        yield
+        yield c
         self.children.append(c)
 
     @contextmanager

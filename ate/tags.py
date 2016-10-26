@@ -121,6 +121,11 @@ class MainNode(BlockStatementNode):
     pass
 
 
+class BlockBlockStatementNode(BlockStatementNode):
+    open = 'block'
+    closing = 'endblock'
+
+
 class ForBlockStatementNode(BlockStatementNode):
     open = 'for'
     closing = 'endfor'
@@ -181,14 +186,28 @@ class ContentStatementNode(BlockStatementNode):
     closing = 'endcontent'
 
     def render(self, context):
-        # import pdb; pdb.set_trace()
-        blockname = "main"
-        tpl = context.child()
-        # find block definition in mainnode subnodes
-        # If not found, render entire template
-        with context.popchild():  # as tpl ?
-            res = tpl.render_with_context(context, start_at_parent=False)
-        return [res]
+        res = []
+
+        blockname = self.expression or "main"
+        block_found = False
+        with context.popchild() as tpl:
+            for node in tpl.mainnode.nodes:
+                if isinstance(node, BlockBlockStatementNode):
+                    block_found = True
+                    if node.expression == blockname:
+                        res.append(node.render(context))
+                        break
+            else:
+                if not block_found:
+                    # use entire template as matching block
+                    res.append(tpl.render_with_context(context,
+                                                       start_at_parent=False))
+                else:
+                    # render the body of the block
+                    for node in self.nodes:
+                        res.append(node.render(context))
+
+        return res
 
 registry = Registry()
 
@@ -198,6 +217,7 @@ registry.register('else', ElseInIfStatementNode,
                   IfBlockStatementNode, direct=True)
 # registry.register('else', ForBlockStatementNode, direct=True)
 registry.register('content', ContentStatementNode, MainNode)
+registry.register('block', BlockBlockStatementNode, MainNode)
 
 
 def CompileStatement(code, parent=None):
