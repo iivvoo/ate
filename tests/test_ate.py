@@ -141,3 +141,8 @@ class TestExpressionParser:
         res, index = parse_expression("{{123}}")
         assert res == "123"
         assert index == 7
+
+    def test_string(self):
+        res, index = parse_expression("{{'hello'}}")
+        assert res == "'hello'"
+        assert index == 11
