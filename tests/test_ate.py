@@ -146,3 +146,13 @@ class TestExpressionParser:
         res, index = parse_expression("{{'hello'}}")
         assert res == "'hello'"
         assert index == 11
+
+    def test_string_escape(self):
+        res, index = parse_expression(r"{{'hel\'lo'}}")
+        assert res == r"'hel\'lo'"
+        assert index == 13
+
+    def test_string_closing_marker(self):
+        res, index = parse_expression("{{'}}'}}")
+        assert res == "'}}'"
+        assert index == 8

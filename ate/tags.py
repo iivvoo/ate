@@ -229,7 +229,6 @@ def parse_expression(code):
     string_mode = ''  # can be ' " or empty
     res = ''
 
-    # import pdb; pdb.set_trace()
     for index in range(2, len(code)):
         c = code[index]
 
@@ -239,6 +238,8 @@ def parse_expression(code):
                     string_mode = False
                 if c == '\\':
                     escape_mode = True
+            else:
+                escape_mode = False
 
         elif c in "'\"":
             string_mode = c
