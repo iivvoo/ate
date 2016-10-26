@@ -169,8 +169,9 @@ class TestIfBlock:
         with pytest.raises(StatementNotAllowed):
             Template("{%else%}").render()
 
-@pytest.mark.skip
+
 class TestInheritance:
+
     def test_simple(self):
         """
             Assume base/extended template definition is defined outside
@@ -182,11 +183,32 @@ class TestInheritance:
 
             Multiple slots / blocks (and proper extending) should be supported
             eventually but the simplest cases first
+
+            moet je eerst de base renderen en dan de child invoegen?
+            Of "letterlijk" samenvoegen?
+
+            Een template kan een parent hebben (en dat weer recursief).
+            Renderen gebeurt altijd vanuit de parent, en de parent kijkt
+            daarbij naar z'n "directe" child om content blokken in te vullen.
+
+            De parent gaat vervolgens recursief naar beneden wandelen, waarbij
+            'child' telkens verandert.
+
+
         """
         base = Template("HEAD {%content%}xxx{%endcontent%} FOOTER")
-        final = base.Template("This is the body")
-        res = final.renderInto(base)
+        final = Template("This is the body", parent=base)
+        res = final.render()
         assert res == "HEAD This is the body FOOTER"
+
+    def test_2levels(self):
+        base = Template("HEAD {%content%}xxx{%endcontent%} FOOTER")
+        first = Template("This is the body {% content %} yyy {% endcontent %}",
+                         parent=base)
+        second = Template("The end...", parent=first)
+        # import pdb; pdb.set_trace()
+        res = second.render()
+        assert res == "HEAD This is the body The end... FOOTER"
 
     def test_explicit1(self):
         base = Template("HEAD {%content main%}xxx{%endcontent%} FOOTER")
@@ -211,3 +233,21 @@ class TestInheritance:
         final = base.Template("This is the body", block="main")
         res = final.renderInto(base)
         assert res == "HEAD xxx FOOTER"
+
+    def test_context_inheritance(self):
+        base = Template("HEAD {% for i in '123' %}"
+                        "{%content%}xxx{%endcontent%}"
+                        "{%endfor%} FOOTER")
+        final = Template("body {{i}}", parent=base)
+        res = final.render()
+        assert res == "HEAD body 1body 2body 3 FOOTER"
+
+    def test_nested(self):
+        """
+            Should unrendered content blocks be removed or remain so another
+            level of nesting can take place?
+            base = "{%content%} {%endcontent%}"
+            c1 = "hello {% content %} {% endcontent %}"
+            c2 = "foo"
+            c2.renderInto(c1.renderInto(base))
+        """

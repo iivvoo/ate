@@ -20,15 +20,20 @@ in for example a for statement
 
 TODO:
 
+- simple explicit inheritance
+- sensible errors, line numbers
 - rename
 - expressions, statements
-- {%else%}
 - {# comments #}
 - sensible error reports
+- %} or }} in expressions, e.g.
+  {{ 'hello }}'}}
+  {% foo "{% %}" %}
+
 
 """
 from simpleeval import SimpleEval
-
+from contextlib import contextmanager
 
 from .tags import MainNode
 
@@ -44,6 +49,7 @@ class Context:
 
     def __init__(self, data):
         self.stack = [data]
+        self.children = []
         self.evaluator = SimpleEval(names=self.name_handler)
 
     def name_handler(self, node):
@@ -55,7 +61,27 @@ class Context:
                 pass
         raise NameError(name)
 
-    def push(self, data):
+    def child(self):
+        if self.children:
+            return self.children[-1]
+        return None
+
+    def pushchild(self, child):
+        self.children.append(child)
+
+    @contextmanager
+    def popchild(self):
+        c = self.children.pop()
+        yield
+        self.children.append(c)
+
+    @contextmanager
+    def __call__(self, data={}):
+        self.push(data)
+        yield
+        self.pop()
+
+    def push(self, data={}):
         self.stack.append(data)
 
     def pop(self):
@@ -79,22 +105,32 @@ def flatten(l):
 
 class Template:
 
-    def __init__(self, code):
+    def __init__(self, code, parent=None):
         self.code = code
         self.mainnode = self.compile()
         self.rendered = []
+        self.parent = parent
 
     def compile(self):
         node = MainNode(type="main")
         node.compile(self.code)
         return node
 
+    def render_with_context(self, context, start_at_parent=True):
+        with context({}):
+            if self.parent and start_at_parent:
+                context.pushchild(self)
+                return self.parent.render_with_context(context)
+
+            return self.mainnode.render(context)
+
     def render_nested(self, **data):
         context = Context(data)
-        return self.mainnode.render(context)
+        return self.render_with_context(context)
 
     def render(self, **data):
         return flatten(self.render_nested(**data))
+
 
 if __name__ == '__main__':
     tpl = Template("""Hello,

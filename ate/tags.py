@@ -176,6 +176,20 @@ class ElseInIfStatementNode(StatementNode):
     open = 'else'
 
 
+class ContentStatementNode(BlockStatementNode):
+    open = 'content'
+    closing = 'endcontent'
+
+    def render(self, context):
+        # import pdb; pdb.set_trace()
+        blockname = "main"
+        tpl = context.child()
+        # find block definition in mainnode subnodes
+        # If not found, render entire template
+        with context.popchild():  # as tpl ?
+            res = tpl.render_with_context(context, start_at_parent=False)
+        return [res]
+
 registry = Registry()
 
 registry.register('for', ForBlockStatementNode, MainNode)
@@ -183,6 +197,7 @@ registry.register('if', IfBlockStatementNode, MainNode)
 registry.register('else', ElseInIfStatementNode,
                   IfBlockStatementNode, direct=True)
 # registry.register('else', ForBlockStatementNode, direct=True)
+registry.register('content', ContentStatementNode, MainNode)
 
 
 def CompileStatement(code, parent=None):
