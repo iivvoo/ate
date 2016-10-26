@@ -7,93 +7,93 @@ class TestInheritance:
     """
 
     def test_simple(self):
-        base = Template("HEAD {%content%}xxx{%endcontent%} FOOTER")
+        base = Template("HEAD {%slot%}xxx{%endslot%} FOOTER")
         final = Template("This is the body", parent=base)
         res = final.render()
         assert res == "HEAD This is the body FOOTER"
 
     def test_2levels(self):
-        base = Template("HEAD {%content%}xxx{%endcontent%} FOOTER")
-        first = Template("This is the body {% content %} yyy {% endcontent %}",
+        base = Template("HEAD {%slot%}xxx{%endslot%} FOOTER")
+        first = Template("This is the body {% slot %} yyy {% endslot %}",
                          parent=base)
         second = Template("The end...", parent=first)
         res = second.render()
         assert res == "HEAD This is the body The end... FOOTER"
 
     def test_explicit1(self):
-        base = Template("HEAD {%content main%}xxx{%endcontent%} FOOTER")
+        base = Template("HEAD {%slot main%}xxx{%endslot%} FOOTER")
         final = Template("This is the body", parent=base)
         res = final.render()
         assert res == "HEAD This is the body FOOTER"
 
     def test_explicit2(self):
-        base = Template("HEAD {%content main%}xxx{%endcontent%} FOOTER")
-        final = Template("{%block main%}This is the body{%endblock%}",
+        base = Template("HEAD {%slot main%}xxx{%endslot%} FOOTER")
+        final = Template("{%fill main%}This is the body{%endfill%}",
                          parent=base)
         res = final.render()
         assert res == "HEAD This is the body FOOTER"
 
     def test_explicit3(self):
-        base = Template("HEAD {%content main%}xxx{%endcontent%} FOOTER")
-        final = Template("{%block main%}This is the body{%endblock%}"
-                         "{%block other%}Other block{%endblock%}",
+        base = Template("HEAD {%slot main%}xxx{%endslot%} FOOTER")
+        final = Template("{%fill main%}This is the body{%endfill%}"
+                         "{%fill other%}Other fill{%endfill%}",
                          parent=base)
         res = final.render()
         assert res == "HEAD This is the body FOOTER"
 
     def test_nondefault(self):
-        base = Template("HEAD {%content foo%}xxx{%endcontent%} FOOTER")
+        base = Template("HEAD {%slot foo%}xxx{%endslot%} FOOTER")
         final = Template(
-            "{%block foo%}This is the body{%endblock%}", parent=base)
+            "{%fill foo%}This is the body{%endfill%}", parent=base)
         res = final.render()
         assert res == "HEAD This is the body FOOTER"
 
     def test_missing(self):
-        base = Template("HEAD {%content foo%}xxx{%endcontent%} FOOTER")
+        base = Template("HEAD {%slot foo%}xxx{%endslot%} FOOTER")
         final = Template(
-            "{%block main%}This is the body{%endblock%}", parent=base)
+            "{%fill main%}This is the body{%endfill%}", parent=base)
         res = final.render()
         assert res == "HEAD xxx FOOTER"
 
     def test_context_inheritance(self):
         base = Template("HEAD {% for i in '123' %}"
-                        "{%content%}xxx{%endcontent%}"
+                        "{%slot%}xxx{%endslot%}"
                         "{%endfor%} FOOTER")
         final = Template("body {{i}}", parent=base)
         res = final.render()
         assert res == "HEAD body 1body 2body 3 FOOTER"
 
-    def test_multi_block(self):
-        base = Template("HEAD {%content main%}xxx{%endcontent%} - "
-                        "{% content bar %}yyy{%endcontent%} FOOTER")
+    def test_multi_fill(self):
+        base = Template("HEAD {%slot main%}xxx{%endslot%} - "
+                        "{% slot bar %}yyy{%endslot%} FOOTER")
         final = Template("Hello "
-                         "{%block main %}This is the main block"
-                         "{% endblock %} and "
-                         "{%block bar %}this is the bar block"
-                         "{%endblock %}", parent=base)
+                         "{%fill main %}This is the main block"
+                         "{% endfill %} and "
+                         "{%fill bar %}this is the bar block"
+                         "{%endfill %}", parent=base)
         res = final.render()
         assert res == "HEAD This is the main block - this is the bar block FOOTER"
 
-    def test_multi_block_sideeffect(self):
-        """ if the child does not explicitly define a block, it will be
-            used for any / all blocks """
-        base = Template("HEAD {%content main%}xxx{%endcontent%} - "
-                        "{% content bar %}yyy{%endcontent%} FOOTER")
+    def test_multi_fill_sideeffect(self):
+        """ if the child does not explicitly define a fill, it will be
+            used for any / all slots """
+        base = Template("HEAD {%slot main%}xxx{%endslot%} - "
+                        "{% slot bar %}yyy{%endslot%} FOOTER")
         final = Template("Hello", parent=base)
         res = final.render()
         assert res == "HEAD Hello - Hello FOOTER"
 
     def test_total_madness1(self):
-        base = Template("HEAD {%content a%} aa {% endcontent %}"
+        base = Template("HEAD {%slot a%} aa {% endslot %}"
                         "{%for i in '123'%}"
-                        "{%content b %}{%endcontent%}"
+                        "{%slot b %}{%endslot%}"
                         "{%endfor%}"
                         "FOOTER")
-        c1 = Template("{%block a%}A{%endblock%}"
+        c1 = Template("{%fill a%}A{%endfill%}"
                       "noise"
-                      "{%block b%}"
-                      "{{i}}{%content c%}..{%endcontent%}"
-                      "{%endblock%}",
+                      "{%fill b%}"
+                      "{{i}}{%slot c%}..{%endslot%}"
+                      "{%endfill%}",
                       parent=base)
         c2 = Template("Default", parent=c1)
 

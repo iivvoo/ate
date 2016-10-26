@@ -121,9 +121,9 @@ class MainNode(BlockStatementNode):
     pass
 
 
-class BlockBlockStatementNode(BlockStatementNode):
-    open = 'block'
-    closing = 'endblock'
+class FillBlockStatementNode(BlockStatementNode):
+    open = 'fill'
+    closing = 'endfill'
 
 
 class ForBlockStatementNode(BlockStatementNode):
@@ -181,9 +181,9 @@ class ElseInIfStatementNode(StatementNode):
     open = 'else'
 
 
-class ContentStatementNode(BlockStatementNode):
-    open = 'content'
-    closing = 'endcontent'
+class SlotStatementNode(BlockStatementNode):
+    open = 'slot'
+    closing = 'endslot'
 
     def render(self, context):
         res = []
@@ -192,7 +192,7 @@ class ContentStatementNode(BlockStatementNode):
         block_found = False
         with context.popchild() as tpl:
             for node in tpl.mainnode.nodes:
-                if isinstance(node, BlockBlockStatementNode):
+                if isinstance(node, FillBlockStatementNode):
                     block_found = True
                     if node.expression == blockname:
                         res.append(node.render(context))
@@ -216,8 +216,8 @@ registry.register('if', IfBlockStatementNode, MainNode)
 registry.register('else', ElseInIfStatementNode,
                   IfBlockStatementNode, direct=True)
 # registry.register('else', ForBlockStatementNode, direct=True)
-registry.register('content', ContentStatementNode, MainNode)
-registry.register('block', BlockBlockStatementNode, MainNode)
+registry.register('slot', SlotStatementNode, MainNode)
+registry.register('fill', FillBlockStatementNode, MainNode)
 
 
 def CompileStatement(code, parent=None):
