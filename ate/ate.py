@@ -23,11 +23,6 @@ TODO:
 - sensible errors, line numbers
 - rename
 - {# comments #}
-- sensible error reports
-- %} or }} in expressions, e.g.
-  {{ 'hello }}'}}
-  {% foo "{% %}" %}
-
 
 """
 from simpleeval import SimpleEval
