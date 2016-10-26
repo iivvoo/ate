@@ -35,12 +35,10 @@ class ExpressionNode(Node):
 
     def __init__(self, expression, parent=None):
         super().__init__(parent=parent)
-        # should {{ }} be removed from expression already?
         self.expression = expression
 
     def render(self, context):
-        expr = self.expression[2:-2]  # remove {{ }}
-        return str(context.eval(expr))
+        return str(context.eval(self.expression))
 
     def __str__(self):
         return "Statement node ----\n{}\n----\n".format(self.expression)
@@ -82,7 +80,6 @@ class BlockStatementNode(StatementNode):
         return self.nodes
 
     def compile(self, code, index=0):
-        """ Wrap nodes in MainNode or something? """
         res = []
         closing = self.closing
         closing_found = closing is None
@@ -220,14 +217,54 @@ registry.register('slot', SlotStatementNode, MainNode)
 registry.register('fill', FillBlockStatementNode, MainNode)
 
 
+def parse_expression(code):
+    """ parse {{ }} expression. Assume it still starts with
+        {{ and ends with }}, may contain trailing code.
+
+        return index where parsing ends including parsing of }}
+    """
+    assert code[:2] == '{{'
+
+    escape_mode = False
+    string_mode = ''  # can be ' " or empty
+    res = ''
+
+    # import pdb; pdb.set_trace()
+    for index in range(2, len(code)):
+        c = code[index]
+
+        if string_mode:
+            if not escape_mode:
+                if c == string_mode:
+                    string_mode = False
+                if c == '\\':
+                    escape_mode = True
+
+        elif c in "'\"":
+            string_mode = c
+
+        elif code[index:index + 2] == "}}":
+            # }} ends the expression and we're not inside a string
+            index += 1  # we read one } ahead
+            break
+        res += c
+    else:
+        raise ParseError("Closing }} not found")
+    return res, index+1
+
+
 def CompileStatement(code, parent=None):
+    """ Either a block statement {% or expression statement {{
+        has started. Figure out what it is and parse it
+    """
     parent = parent or MainNode("main")
+
+    if code[1] == '{':  # expression statement
+        expr, end = parse_expression(code)
+        return ExpressionNode(expr), end
     end = code.find("}")
     if end == -1:
         raise ParseError("Closing } missing")
-    if code[1] == '{':  # non-block statement
-        # assume } follows closing } -> +2
-        return ExpressionNode(code[:end + 2]), end + 2
 
     # assume it's {%. Adjust end to compensate for
     # closing %

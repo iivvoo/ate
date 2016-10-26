@@ -20,10 +20,8 @@ in for example a for statement
 
 TODO:
 
-- simple explicit inheritance
 - sensible errors, line numbers
 - rename
-- expressions, statements
 - {# comments #}
 - sensible error reports
 - %} or }} in expressions, e.g.

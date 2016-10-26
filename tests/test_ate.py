@@ -5,7 +5,7 @@ from ate.tags import ExpressionNode
 from ate.tags import BlockStatementNode
 from ate.tags import MainNode
 from ate.tags import ForBlockStatementNode
-
+from ate.tags import parse_expression
 
 class TestMyTpl:
 
@@ -29,7 +29,7 @@ class TestMyTpl:
         res, skip = CompileStatement(tpl)
         assert skip == len(tpl)
         assert isinstance(res, ExpressionNode)
-        assert res.expression == "{{hello}}"
+        assert res.expression == "hello"
 
     def test_block(self):
         tpl = "{% for i in abc%} x {% endfor %}"
@@ -53,7 +53,6 @@ class TestMyTpl:
         {% endfor %}
 
         That's all!"""
-        # import pdb; pdb.set_trace()
         t = Template(tpl)
         assert len(t.mainnode.nodes) == 3
         nodes = t.mainnode.nodes
@@ -122,3 +121,23 @@ class TestStatementEval:
         tpl = Template("{{i + j}}")
         assert tpl.render(i=10, j=5) == "15"
         assert tpl.render(i="Hello", j="World") == "HelloWorld"
+
+    def test_string_expression(self):
+        tpl = Template("{{'hello'}}")
+        assert tpl.render() == 'hello'
+
+    def xtest_string_expression_specialx(self):
+        tpl = Template("{{'{{hello}}'}}")
+        assert tpl.render() == '{{hello}}'
+
+    def xtest_string_expression_special2(self):
+        tpl = Template("{{'{%hello%}'}}")
+        assert tpl.render() == '{%hello%}'
+
+
+class TestExpressionParser:
+
+    def test_simple(self):
+        res, index = parse_expression("{{123}}")
+        assert res == "123"
+        assert index == 7
