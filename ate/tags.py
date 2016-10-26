@@ -56,6 +56,11 @@ class StatementNode(Node):
         return index
 
 
+class CommentNode(StatementNode):
+    def __init__(self, expression="", parent=None):
+        super().__init__("comment", expression=expression, parent=parent)
+
+
 class BlockStatementNode(StatementNode):
     closing = None
     has_block = True
@@ -264,6 +269,11 @@ def parse_statement(code):
     return r
 
 
+def parse_comment(code):
+    r = parse_expression(code, start='{#', end='#}')
+    return r
+
+
 def CompileStatement(code, parent=None):
     """ Either a block statement {% or expression statement {{
         has started. Figure out what it is and parse it
@@ -273,6 +283,10 @@ def CompileStatement(code, parent=None):
     if code[1] == '{':  # expression statement
         expr, end = parse_expression(code)
         return ExpressionNode(expr), end
+
+    if code[1] == '#':  # comment
+        expr, end = parse_comment(code)
+        return CommentNode(expr), end
 
     statement, end = parse_statement(code)
     statement = statement.strip()

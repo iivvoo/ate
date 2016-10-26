@@ -7,6 +7,8 @@ from ate.tags import ExpressionNode
 from ate.tags import BlockStatementNode
 from ate.tags import MainNode
 from ate.tags import ForBlockStatementNode
+from ate.tags import CommentNode
+
 from ate.tags import parse_expression
 from ate.exceptions import ParseError
 
@@ -98,6 +100,33 @@ class TestMyTpl:
         res, skip = CompileStatement(tpl)
         assert res.expression == "i in '%}'"
 
+    def test_comment_simple(self):
+        tpl = "{# hello world #}"
+        res, skip = CompileStatement(tpl)
+        assert isinstance(res, CommentNode)
+        assert res.expression == " hello world "
+
+    def test_comment_broken_statement(self):
+        tpl = "{# {% for #}"
+        res, skip = CompileStatement(tpl)
+        assert isinstance(res, CommentNode)
+        assert res.expression == " {% for "
+
+    def test_comment_statement(self):
+        tpl = """{# {% for i in '123' %}
+{{i}}
+{%endfor%} #}"""
+        res, skip = CompileStatement(tpl)
+        assert isinstance(res, CommentNode)
+        assert res.expression == """ {% for i in '123' %}
+{{i}}
+{%endfor%} """
+
+    def test_comment_expression(self):
+        tpl = "{# {{'hello'}} #}"
+        res, skip = CompileStatement(tpl)
+        assert isinstance(res, CommentNode)
+        assert res.expression == " {{'hello'}} "
 
 class TestTemplateRender:
 
