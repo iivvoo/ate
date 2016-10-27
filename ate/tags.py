@@ -1,7 +1,7 @@
 import re
 from collections import namedtuple
 
-from .exceptions import ParseError, NotClosedError
+from .exceptions import ParseError, ExpressionNotClosed
 from .registry import Registry
 
 
@@ -114,7 +114,8 @@ class BlockStatementNode(StatementNode):
             index += skip
 
         if not closing_found:
-            raise ParseError("Closing tag {} not found".format(closing))
+            raise ParseError("Closing tag {} not found".format(closing),
+                             pc)
 
         self.nodes = res
         self.code = code[:index]
@@ -258,8 +259,7 @@ def parse_expression(code, start="{{", end="}}"):
             break
         res += c
     else:
-        raise NotClosedError("Closing {} not found".format(end),
-                             code=code[2:].strip())
+        raise ExpressionNotClosed()
     return res, index + 1
 
 
@@ -285,14 +285,23 @@ def CompileStatement(pc, parent=None):
 
     # we have a parse context. catch errors and add line numbers etc?
     if pc.code[1] == '{':  # expression statement
-        expr, end = parse_expression(pc.code)
+        try:
+            expr, end = parse_expression(pc.code)
+        except ExpressionNotClosed:
+            raise ParseError("Expression not closed", pc)
         return ExpressionNode(expr), end
 
     if pc.code[1] == '#':  # comment
-        expr, end = parse_comment(pc.code)
+        try:
+            expr, end = parse_comment(pc.code)
+        except ExpressionNotClosed:
+            raise ParseError("Comment not closed", pc)
         return CommentNode(expr), end
 
-    statement, end = parse_statement(pc.code)
+    try:
+        statement, end = parse_statement(pc.code)
+    except ExpressionNotClosed:
+        raise ParseError("Statement not closed", pc)
     statement = statement.strip()
 
     main, _, expr = statement.partition(" ")

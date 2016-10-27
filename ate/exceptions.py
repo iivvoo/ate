@@ -2,11 +2,15 @@ class ATEException(Exception):
     pass
 
 
+class ExpressionNotClosed(ATEException):
+    pass
+
+
 class ParseError(ATEException):
 
-    def __init__(self, message, code=""):
+    def __init__(self, message, pc):
         super().__init__(message)
-        self.code = code
+        self.pc = pc
 
 
 class NotClosedError(ParseError):

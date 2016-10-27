@@ -10,7 +10,7 @@ from ate.tags import ForBlockStatementNode
 from ate.tags import CommentNode
 
 from ate.tags import parse_expression
-from ate.exceptions import ParseError
+from ate.exceptions import ExpressionNotClosed
 
 
 class TestMyTpl:
@@ -216,11 +216,11 @@ class TestExpressionParser:
         assert index == 7
 
     def test_close_error(self):
-        with pytest.raises(ParseError):
+        with pytest.raises(ExpressionNotClosed):
             res, index = parse_expression("{{123}")
 
     def test_close_missing(self):
-        with pytest.raises(ParseError):
+        with pytest.raises(ExpressionNotClosed):
             res, index = parse_expression("{{123")
 
     def test_handlebars_in_exp(self):

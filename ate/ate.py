@@ -100,12 +100,7 @@ class ParseContext:
         ParseContext is used to keep track of where we currently are in a
         template. Mostly for (more) detailed error reporting.
 
-        Idee:
-
-        Code is gewrapt in ParseContext. Als je gaat slicen dan krijg je een nieuwe
-        context die weet wat z'n relatieve positie is.
-
-        Ga uit dat python string slicing efficient is
+        http://stackoverflow.com/questions/5722006/does-python-do-slice-by-reference-on-strings
     """
 
     def __init__(self, code, offset=0, parent=None):
@@ -122,6 +117,20 @@ class ParseContext:
             return ParseContext(self.code[i], offset=self.offset + offset,
                                 parent=self)
         return self.code[i]
+
+    def position(self):
+        offset = 0
+        p = self
+        while True:
+            offset += p.offset
+            code = p.code
+            if not p.parent:
+                break
+            p = p.parent
+
+        line = code[:offset].count('\n')
+        col = len(code[:offset].rsplit("\n", 1))
+        return line, col
 
 
 class Template:
