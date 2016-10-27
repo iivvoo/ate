@@ -1,7 +1,7 @@
 import re
 from collections import namedtuple
 
-from .exceptions import ParseError
+from .exceptions import ParseError, NotClosedError
 from .registry import Registry
 
 
@@ -57,6 +57,7 @@ class StatementNode(Node):
 
 
 class CommentNode(StatementNode):
+
     def __init__(self, expression="", parent=None):
         super().__init__("comment", expression=expression, parent=parent)
 
@@ -256,7 +257,8 @@ def parse_expression(code, start="{{", end="}}"):
             break
         res += c
     else:
-        raise ParseError("Closing }} not found")
+        raise NotClosedError("Closing {} not found".format(end),
+                             code=code[2:].strip())
     return res, index + 1
 
 

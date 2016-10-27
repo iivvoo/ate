@@ -95,6 +95,35 @@ def flatten(l):
     return b
 
 
+class ParseContext:
+    """
+        ParseContext is used to keep track of where we currently are in a
+        template. Mostly for (more) detailed error reporting.
+
+        Idee:
+
+        Code is gewrapt in ParseContext. Als je gaat slicen dan krijg je een nieuwe
+        context die weet wat z'n relatieve positie is.
+
+        Ga uit dat python string slicing efficient is
+    """
+
+    def __init__(self, code, offset=0, parent=None):
+        self.code = code
+        self.offset = offset
+        self.parent = parent
+
+    def __len__(self):
+        return len(self.code) - self.offset
+
+    def __getitem__(self, i):
+        if isinstance(i, slice):
+            offset = i.start or 0
+            return ParseContext(self.code[i], offset=self.offset + offset,
+                                parent=self)
+        return self.code[i]
+
+
 class Template:
 
     def __init__(self, code, parent=None):
@@ -105,7 +134,7 @@ class Template:
 
     def compile(self):
         node = MainNode(type="main")
-        node.compile(self.code)
+        node.compile(ParseContext(self.code))
         return node
 
     def render_with_context(self, context, start_at_parent=True):
