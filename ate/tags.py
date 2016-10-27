@@ -85,21 +85,22 @@ class BlockStatementNode(StatementNode):
     def __iter__(self):
         return self.nodes
 
-    def compile(self, code, index=0):
+    def compile(self, pc, index=0):
         res = []
+        code = pc.code
         closing = self.closing
         closing_found = closing is None
 
         while index < len(code):
             first_marker = code[index:].find('{')
             if first_marker == -1:
-                res.append(TextNode(code[index:]))
+                res.append(TextNode(pc[index:]))
                 index = len(code)
                 break
 
             if first_marker > 0:
                 # Is there any text to put in a node?
-                res.append(TextNode(code[index:index + first_marker]))
+                res.append(TextNode(pc[index:index + first_marker]))
                 index += first_marker
 
             if closing and re.match("{{%\s*{}\s*%}}".format(closing),
@@ -108,7 +109,7 @@ class BlockStatementNode(StatementNode):
                 index += code[index:].find("%}") + 2
                 break
 
-            node, skip = CompileStatement(code[index:], parent=self)
+            node, skip = CompileStatement(pc[index:], parent=self)
             res.append(node)
             index += skip
 
@@ -276,29 +277,31 @@ def parse_comment(code):
     return r
 
 
-def CompileStatement(code, parent=None):
+def CompileStatement(pc, parent=None):
     """ Either a block statement {% or expression statement {{
         has started. Figure out what it is and parse it
     """
     parent = parent or MainNode("main")
 
-    if code[1] == '{':  # expression statement
-        expr, end = parse_expression(code)
+    # we have a parse context. catch errors and add line numbers etc?
+    if pc.code[1] == '{':  # expression statement
+        expr, end = parse_expression(pc.code)
         return ExpressionNode(expr), end
 
-    if code[1] == '#':  # comment
-        expr, end = parse_comment(code)
+    if pc.code[1] == '#':  # comment
+        expr, end = parse_comment(pc.code)
         return CommentNode(expr), end
 
-    statement, end = parse_statement(code)
+    statement, end = parse_statement(pc.code)
     statement = statement.strip()
 
     main, _, expr = statement.partition(" ")
 
+    import pdb; pdb.set_trace()
     klass = registry.find(main, parent)
 
     node = klass(main, expr, parent=parent)
-    end = node.compile(code, end)
+    end = node.compile(pc, end)
 
     # No node is inserted, it purely returns body
     return node, end

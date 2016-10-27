@@ -1,6 +1,6 @@
 import pytest
 
-from ate.ate import Template
+from ate.ate import Template, ParseContext
 from ate.tags import CompileStatement
 from ate.tags import TextNode
 from ate.tags import ExpressionNode
@@ -32,14 +32,14 @@ class TestMyTpl:
 
     def test_statement(self):
         tpl = "{{hello}}"
-        res, skip = CompileStatement(tpl)
+        res, skip = CompileStatement(ParseContext(tpl))
         assert skip == len(tpl)
         assert isinstance(res, ExpressionNode)
         assert res.expression == "hello"
 
     def test_block(self):
         tpl = "{% for i in abc%} x {% endfor %}"
-        res, skip = CompileStatement(tpl)
+        res, skip = CompileStatement(ParseContext(tpl))
         assert skip == len(tpl)
         assert isinstance(res, BlockStatementNode)
         assert res.type == "for"
@@ -67,48 +67,49 @@ class TestMyTpl:
 
     def test_closing_spacing(self):
         tn = ForBlockStatementNode("for")
-        index = tn.compile("{%for%}{%endfor%}", len("{%for%}"))
+        index = tn.compile(ParseContext("{%for%}{%endfor%}", len("{%for%}")))
         assert index == 17
 
     def test_closing_spacing2(self):
         tn = ForBlockStatementNode("for")
-        index = tn.compile("{%for%}{% endfor%}", len("{%for%}"))
+        index = tn.compile(ParseContext("{%for%}{% endfor%}", len("{%for%}")))
         assert index == 18
 
     def test_closing_spacing3(self):
         tn = ForBlockStatementNode("for")
-        index = tn.compile("{%for%}{%  endfor%}", len("{%for%}"))
+        index = tn.compile(ParseContext("{%for%}{%  endfor%}", len("{%for%}")))
         assert index == 19
 
     def test_closing_spacing4(self):
         tn = ForBlockStatementNode("for")
-        index = tn.compile("{%for%}{%endfor %}", len("{%for%}"))
+        index = tn.compile(ParseContext("{%for%}{%endfor %}", len("{%for%}")))
         assert index == 18
 
     def test_closing_spacing5(self):
         tn = ForBlockStatementNode("for")
-        index = tn.compile("{%for%}{%endfor  %}", len("{%for%}"))
+        index = tn.compile(ParseContext("{%for%}{%endfor  %}", len("{%for%}")))
         assert index == 19
 
     def test_closing_spacing6(self):
         tn = ForBlockStatementNode("for")
-        index = tn.compile("{%for%}{%  endfor  %}", len("{%for%}"))
+        import pdb; pdb.set_trace()
+        index = tn.compile(ParseContext("{%for%}{%  endfor  %}", len("{%for%}")))
         assert index == 21
 
     def test_close_marker_in_expr(self):
         tpl = "{% for i in '%}' %} x {% endfor %}"
-        res, skip = CompileStatement(tpl)
+        res, skip = CompileStatement(ParseContext(tpl))
         assert res.expression == "i in '%}'"
 
     def test_comment_simple(self):
         tpl = "{# hello world #}"
-        res, skip = CompileStatement(tpl)
+        res, skip = CompileStatement(ParseContext(tpl))
         assert isinstance(res, CommentNode)
         assert res.expression == " hello world "
 
     def test_comment_broken_statement(self):
         tpl = "{# {% for #}"
-        res, skip = CompileStatement(tpl)
+        res, skip = CompileStatement(ParseContext(tpl))
         assert isinstance(res, CommentNode)
         assert res.expression == " {% for "
 
@@ -116,7 +117,7 @@ class TestMyTpl:
         tpl = """{# {% for i in '123' %}
 {{i}}
 {%endfor%} #}"""
-        res, skip = CompileStatement(tpl)
+        res, skip = CompileStatement(ParseContext(tpl))
         assert isinstance(res, CommentNode)
         assert res.expression == """ {% for i in '123' %}
 {{i}}
@@ -124,7 +125,7 @@ class TestMyTpl:
 
     def test_comment_expression(self):
         tpl = "{# {{'hello'}} #}"
-        res, skip = CompileStatement(tpl)
+        res, skip = CompileStatement(ParseContext(tpl))
         assert isinstance(res, CommentNode)
         assert res.expression == " {{'hello'}} "
 
