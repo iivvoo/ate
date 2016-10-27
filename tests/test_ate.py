@@ -67,33 +67,32 @@ class TestMyTpl:
 
     def test_closing_spacing(self):
         tn = ForBlockStatementNode("for")
-        index = tn.compile(ParseContext("{%for%}{%endfor%}", len("{%for%}")))
+        index = tn.compile(ParseContext("{%for%}{%endfor%}"), len("{%for%}"))
         assert index == 17
 
     def test_closing_spacing2(self):
         tn = ForBlockStatementNode("for")
-        index = tn.compile(ParseContext("{%for%}{% endfor%}", len("{%for%}")))
+        index = tn.compile(ParseContext("{%for%}{% endfor%}"), len("{%for%}"))
         assert index == 18
 
     def test_closing_spacing3(self):
         tn = ForBlockStatementNode("for")
-        index = tn.compile(ParseContext("{%for%}{%  endfor%}", len("{%for%}")))
+        index = tn.compile(ParseContext("{%for%}{%  endfor%}"), len("{%for%}"))
         assert index == 19
 
     def test_closing_spacing4(self):
         tn = ForBlockStatementNode("for")
-        index = tn.compile(ParseContext("{%for%}{%endfor %}", len("{%for%}")))
+        index = tn.compile(ParseContext("{%for%}{%endfor %}"), len("{%for%}"))
         assert index == 18
 
     def test_closing_spacing5(self):
         tn = ForBlockStatementNode("for")
-        index = tn.compile(ParseContext("{%for%}{%endfor  %}", len("{%for%}")))
+        index = tn.compile(ParseContext("{%for%}{%endfor  %}"), len("{%for%}"))
         assert index == 19
 
     def test_closing_spacing6(self):
         tn = ForBlockStatementNode("for")
-        import pdb; pdb.set_trace()
-        index = tn.compile(ParseContext("{%for%}{%  endfor  %}", len("{%for%}")))
+        index = tn.compile(ParseContext("{%for%}{%  endfor  %}"), len("{%for%}"))
         assert index == 21
 
     def test_close_marker_in_expr(self):

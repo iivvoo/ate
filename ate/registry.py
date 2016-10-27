@@ -12,7 +12,6 @@ class Registry:
 
     def find(self, tag, node):
         any_found = False
-        import pdb; pdb.set_trace()
 
         for tagname, nodeclass, parent, direct in self._reg:
             if tagname == tag:

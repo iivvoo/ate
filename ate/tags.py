@@ -94,13 +94,13 @@ class BlockStatementNode(StatementNode):
         while index < len(code):
             first_marker = code[index:].find('{')
             if first_marker == -1:
-                res.append(TextNode(pc[index:]))
+                res.append(TextNode(code[index:]))
                 index = len(code)
                 break
 
             if first_marker > 0:
                 # Is there any text to put in a node?
-                res.append(TextNode(pc[index:index + first_marker]))
+                res.append(TextNode(code[index:index + first_marker]))
                 index += first_marker
 
             if closing and re.match("{{%\s*{}\s*%}}".format(closing),
@@ -297,7 +297,6 @@ def CompileStatement(pc, parent=None):
 
     main, _, expr = statement.partition(" ")
 
-    import pdb; pdb.set_trace()
     klass = registry.find(main, parent)
 
     node = klass(main, expr, parent=parent)
