@@ -128,6 +128,19 @@ class TestMyTpl:
         assert isinstance(res, CommentNode)
         assert res.expression == " {{'hello'}} "
 
+    def test_css(self):
+        tpl = """<html>
+<style>
+  p, th, td {
+    font-family: 'Open Sans', sans-serif;
+  }</style>
+</html>
+"""
+        template = Template(tpl)
+        assert isinstance(template.mainnode, MainNode)
+        assert isinstance(template.mainnode.nodes[0], TextNode)
+        assert template.mainnode.nodes[0].text == tpl
+
 
 class TestTemplateRender:
 
