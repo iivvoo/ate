@@ -57,6 +57,7 @@ class StatementNode(Node):
 
 
 class CommentNode(StatementNode):
+
     def __init__(self, expression="", parent=None):
         super().__init__("comment", expression=expression, parent=parent)
 
@@ -92,7 +93,8 @@ class BlockStatementNode(StatementNode):
         while index < len(code):
             first_marker = code[index:].find('{')
             if first_marker == -1 or \
-               code[first_marker:first_marker+2] not in ('{%', '{{', '{{#'):
+                    code[index + first_marker:index + first_marker + 2] \
+                    not in ('{%', '{{', '{#'):
                 res.append(TextNode(code[index:]))
                 index = len(code)
                 break
