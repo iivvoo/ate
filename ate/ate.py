@@ -38,6 +38,7 @@ class Context:
             ....
 
     """
+    evaluator_class = SimpleEval
 
     def __init__(self, data):
         self.stack = [data]
@@ -96,12 +97,14 @@ def flatten(l):
 
 
 class Template:
+    context_class = Context
 
-    def __init__(self, code, parent=None):
+    def __init__(self, code, parent=None, context_class=None):
         self.code = code
         self.mainnode = self.compile()
         self.rendered = []
         self.parent = parent
+        self.context_class = context_class or self.context_class
 
     def compile(self):
         node = MainNode(type="main")
@@ -116,12 +119,12 @@ class Template:
 
             return self.mainnode.render(context)
 
-    def render_nested(self, **data):
-        context = Context(data)
+    def render_nested(self, context_class=None, **data):
+        context = (context_class or self.context_class)(data)
         return self.render_with_context(context)
 
-    def render(self, **data):
-        return flatten(self.render_nested(**data))
+    def render(self, context_class=None, **data):
+        return flatten(self.render_nested(context_class=context_class, **data))
 
 
 if __name__ == '__main__':
