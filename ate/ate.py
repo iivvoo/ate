@@ -40,7 +40,7 @@ class Context:
     """
     evaluator_class = SimpleEval
 
-    def __init__(self, data):
+    def __init__(self, data={}):
         self.stack = [data]
         self.children = []
         self.evaluator = SimpleEval(names=self.name_handler)
@@ -119,12 +119,14 @@ class Template:
 
             return self.mainnode.render(context)
 
-    def render_nested(self, context_class=None, **data):
-        context = (context_class or self.context_class)(data)
+    def render_nested(self, context=None, context_class=None, **data):
+        if not context:
+            context = (context_class or self.context_class)(data)
         return self.render_with_context(context)
 
-    def render(self, context_class=None, **data):
-        return flatten(self.render_nested(context_class=context_class, **data))
+    def render(self, context=None, context_class=None, **data):
+        return flatten(self.render_nested(context=context,
+                                          context_class=context_class, **data))
 
 
 if __name__ == '__main__':
