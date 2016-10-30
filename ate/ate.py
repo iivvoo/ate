@@ -81,7 +81,7 @@ class Context:
         self.stack.pop()
 
     def eval(self, expr):
-        return self.evaluator.eval(expr)
+        return self.evaluator.eval(expr.lstrip())
 
 
 def flatten(l):
