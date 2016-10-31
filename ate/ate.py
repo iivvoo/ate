@@ -108,6 +108,8 @@ class ParseContext:
         self.code = code
         self.offset = offset
         self.parent = parent
+        self.node = None
+        self.tag = ""
 
     def __len__(self):
         return len(self.code) - self.offset
@@ -120,17 +122,17 @@ class ParseContext:
         return self.code[i]
 
     def position(self):
-        offset = 0
+        offset = self.offset
         p = self
         while True:
-            offset += p.offset
+            # offset += p.offset
             code = p.code
             if not p.parent:
                 break
             p = p.parent
 
-        line = code[:offset].count('\n')
-        col = len(code[:offset].rsplit("\n", 1))
+        line = code[:offset].count('\n') + 1  # 1-based
+        col = len(code[:offset].rsplit("\n", 1)[-1]) + 1  # 1-based
         return line, col
 
 

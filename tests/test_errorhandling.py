@@ -15,6 +15,9 @@ class TestErrorHandling:
         exc = e.value
         assert exc.pc.offset == 0
         assert exc.pc.code.startswith("{% nonexisting")
+        line, col = exc.pc.position()
+        assert line == 1
+        assert col == 1
 
     def test_nested(self):
         tpl = ParseContext("""{% for i in 'abc' %}
@@ -27,10 +30,28 @@ class TestErrorHandling:
         assert exc.pc.offset == 25
         assert exc.pc.code.startswith("{%if")
         line, col = exc.pc.position()
-        assert line == 1
+        assert line == 2
         assert col == 5
 
-    def xtest_be_smart_about_closed(self):
+    def test_multi_line_indent(self):
+        tpl = """Hello World
+
+this is a  test
+a         {%if }
+more noise
+...
+"""
+        with pytest.raises(ParseError) as e:
+            Template(tpl)
+
+        exc = e.value
+        assert exc.pc.offset == 39
+        assert exc.pc.code.startswith("{%if")
+        line, col = exc.pc.position()
+        assert line == 4
+        assert col == 11
+
+    def test_be_smart_about_closed(self):
         tpl = ParseContext("""{% for i in 'abc' %}
     {%if } {{i}} {%endif%}
 {%endfor%}
@@ -39,12 +60,13 @@ class TestErrorHandling:
             res, skip = CompileStatement(tpl)
 
         exc = e.value
-        assert exc.pc.offset == 25
-        assert exc.pc.code.startswith("{%if")
+        assert exc.pc.offset == 48
+        assert exc.pc.code.startswith("{%endfor")
 
+        # import pdb; pdb.set_trace()
         line, col = exc.pc.position()
-        assert line == 1
-        assert col == 5
+        assert line == 3
+        assert col == 1
 
     def test_complex(self):
         tpl = """Hello World

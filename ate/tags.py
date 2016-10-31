@@ -2,6 +2,8 @@ import re
 from collections import namedtuple
 
 from .exceptions import ParseError, ExpressionNotClosed
+from .exceptions import NotClosedError, StatementNotFound
+from .exceptions import StatementNotAllowed, UnexpectedClosingFound
 from .registry import Registry
 
 
@@ -289,28 +291,40 @@ def CompileStatement(pc, parent=None):
     if pc.code[1] == '{':  # expression statement
         try:
             expr, end = parse_expression(pc.code)
-        except ExpressionNotClosed:
-            raise ParseError("Expression not closed", pc)
+        except ExpressionNotClosed as e:
+            raise ParseError("Expression not closed", pc) from e
         return ExpressionNode(expr), end
 
     if pc.code[1] == '#':  # comment
         try:
             expr, end = parse_comment(pc.code)
-        except ExpressionNotClosed:
-            raise ParseError("Comment not closed", pc)
+        except ExpressionNotClosed as e:
+            raise ParseError("Comment not closed", pc) from e
         return CommentNode(expr), end
 
     try:
         statement, end = parse_statement(pc.code)
-    except ExpressionNotClosed:
-        raise ParseError("Statement not closed", pc)
+    except ExpressionNotClosed as e:
+        raise ParseError("Statement not closed", pc) from e
     statement = statement.strip()
 
     main, _, expr = statement.partition(" ")
 
-    klass = registry.find(main, parent)
+    pc.tag = main
+    try:
+        klass = registry.find(main, parent)
+    except NotClosedError as e:
+        raise ParseError("Statement not closed", pc) from e
+    except StatementNotFound as e:
+        raise ParseError("Statement not found", pc) from e
+    except StatementNotAllowed as e:
+        raise ParseError("Statement not allowed", pc) from e
+    except UnexpectedClosingFound as e:
+        raise ParseError("Unexpected closing statement found", pc) from e
 
     node = klass(main, expr, parent=parent)
+    pc.node = node
+
     end = node.compile(pc, end)
 
     # No node is inserted, it purely returns body

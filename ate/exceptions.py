@@ -23,3 +23,7 @@ class StatementNotFound(ATEException):
 
 class StatementNotAllowed(ATEException):
     pass
+
+
+class UnexpectedClosingFound(ATEException):
+    pass

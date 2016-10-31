@@ -2,7 +2,7 @@ import pytest
 
 from ate.ate import Template
 
-from ate.exceptions import StatementNotAllowed
+from ate.exceptions import ParseError
 
 
 class TestIfBlock:
@@ -19,5 +19,6 @@ class TestIfBlock:
 
     def test_toplevel_else(self):
         """ else cannot be used by itself """
-        with pytest.raises(StatementNotAllowed):
+        with pytest.raises(ParseError) as e:
             Template("{%else%}").render()
+        assert e.value.pc.tag == 'else'
