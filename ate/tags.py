@@ -93,7 +93,9 @@ class BlockStatementNode(StatementNode):
 
         while index < len(code):
             first_marker = code[index:].find('{')
-            if first_marker == -1:
+            if first_marker == -1 or \
+                    code[index + first_marker:index + first_marker + 2] \
+                    not in ('{%', '{{', '{#'):
                 res.append(TextNode(code[index:]))
                 index = len(code)
                 break
