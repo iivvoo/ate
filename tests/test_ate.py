@@ -92,7 +92,8 @@ class TestMyTpl:
 
     def test_closing_spacing6(self):
         tn = ForBlockStatementNode("for")
-        index = tn.compile(ParseContext("{%for%}{%  endfor  %}"), len("{%for%}"))
+        index = tn.compile(ParseContext(
+            "{%for%}{%  endfor  %}"), len("{%for%}"))
         assert index == 21
 
     def test_close_marker_in_expr(self):
@@ -140,6 +141,15 @@ class TestMyTpl:
         assert isinstance(template.mainnode, MainNode)
         assert isinstance(template.mainnode.nodes[0], TextNode)
         assert template.mainnode.nodes[0].text == tpl
+
+    def test_accolade(self):
+        tpl = """if {} { {! {% for i in '123' %}{{i}}{%endfor%} { }} {="""
+        template = Template(tpl)
+        assert isinstance(template.mainnode.nodes[0], TextNode)
+        assert template.mainnode.nodes[0].text == "if {} { {! "
+        assert isinstance(template.mainnode.nodes[1], ForBlockStatementNode)
+        assert isinstance(template.mainnode.nodes[2], TextNode)
+        assert template.mainnode.nodes[2].text == " { }} {="
 
 
 class TestTemplateRender:

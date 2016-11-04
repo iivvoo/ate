@@ -105,3 +105,21 @@ class TestInheritance:
         final = Template("<<MARKER>>", parent=base)
         res = final.render()
         assert res == "HEAD <<MARKER>> FOOTER"
+
+    def test_attraction_marker2(self):
+        base = Template("""
+<html>
+<style>
+  p, th, td {
+    font-family: 'Open Sans', sans-serif;
+  }
+</style>
+<body>
+  {% slot content %}{% endslot %}
+</body>
+
+</html>
+""")
+        final = Template("<<MARKER>>", parent=base)
+        res = final.render()
+        assert '<<MARKER>>' in res

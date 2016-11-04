@@ -87,17 +87,30 @@ class BlockStatementNode(StatementNode):
     def __iter__(self):
         return self.nodes
 
+    def find_start_block(self, code):
+        """ find the start of the nearest block: {{ {% or {# """
+        indexes = []
+
+        for start in ('{%', '{{', '{#'):
+            index = code.find(start)
+            if index != -1:
+                indexes.append(index)
+
+        if indexes:
+            return min(indexes)
+        return -1
+
     def compile(self, pc, index=0):
         res = []
         code = pc.code
         closing = self.closing
         closing_found = closing is None
 
+        # import pdb; pdb.set_trace()
         while index < len(code):
-            first_marker = code[index:].find('{')
-            if first_marker == -1 or \
-                    code[index + first_marker:index + first_marker + 2] \
-                    not in ('{%', '{{', '{#'):
+            first_marker = self.find_start_block(code[index:])
+
+            if first_marker == -1:
                 res.append(TextNode(code[index:]))
                 index = len(code)
                 break
