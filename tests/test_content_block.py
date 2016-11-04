@@ -101,7 +101,7 @@ class TestInheritance:
         assert res == "HEAD A1Default2Default3DefaultFOOTER"
 
     def test_attraction_marker(self):
-        base = Template("HEAD {%slot content %}xxx{%endslot%} FOOTER")
+        base = Template("HEAD {% slot content %}xxx{% endslot %} FOOTER")
         final = Template("<<MARKER>>", parent=base)
         res = final.render()
         assert res == "HEAD <<MARKER>> FOOTER"
