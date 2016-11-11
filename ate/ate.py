@@ -39,11 +39,11 @@ class Context:
 
     """
     evaluator_class = SimpleEval
+    functions = {}
 
     def __init__(self, data={}):
         self.stack = [data]
         self.children = []
-        self.functions = {}
         self.evaluator = SimpleEval(names=self.name_handler, functions=self.functions)
 
     def name_handler(self, node):
