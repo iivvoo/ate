@@ -43,7 +43,8 @@ class Context:
     def __init__(self, data={}):
         self.stack = [data]
         self.children = []
-        self.evaluator = SimpleEval(names=self.name_handler)
+        self.functions = {}
+        self.evaluator = SimpleEval(names=self.name_handler, functions=self.functions)
 
     def name_handler(self, node):
         name = node.id
