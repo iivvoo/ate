@@ -123,3 +123,10 @@ class TestInheritance:
         final = Template("<<MARKER>>", parent=base)
         res = final.render()
         assert '<<MARKER>>' in res
+
+    def test_no_child(self):
+        """ rendering a base template with slot without a child providing
+            a fill """
+        tpl = "1\n\n{% slot %}hello{%endslot%}"
+        res = Template(tpl).render()
+        assert res == "1\n\nhello"

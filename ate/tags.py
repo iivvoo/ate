@@ -212,23 +212,30 @@ class SlotStatementNode(BlockStatementNode):
 
         blockname = self.expression or "main"
         block_found = False
-        with context.popchild() as tpl:
-            for node in tpl.mainnode.nodes:
-                if isinstance(node, FillBlockStatementNode):
-                    block_found = True
-                    if node.expression == blockname:
-                        res.append(node.render(context))
-                        break
-            else:
-                if not block_found:
-                    # use entire template as matching block
-                    res.append(tpl.render_with_context(context,
-                                                       start_at_parent=False))
+        # is there a child to pop? E.g. rendering base template directly
+        if context.child():
+            with context.popchild() as tpl:
+                for node in tpl.mainnode.nodes:
+                    if isinstance(node, FillBlockStatementNode):
+                        block_found = True
+                        if node.expression == blockname:
+                            res.append(node.render(context))
+                            break
                 else:
-                    # render the body of the block
-                    for node in self.nodes:
-                        res.append(node.render(context))
-
+                    if not block_found:
+                        # use entire template as matching block
+                        block_found = True
+                        res.append(tpl.render_with_context(
+                            context,
+                            start_at_parent=False))
+                    else:
+                        # render the body of the block
+                        for node in self.nodes:
+                            res.append(node.render(context))
+        else:
+            # render the body of the block
+            for node in self.nodes:
+                res.append(node.render(context))
         return res
 
 registry = Registry()
