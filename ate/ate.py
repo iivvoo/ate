@@ -24,7 +24,7 @@ TODO:
 - rename
 
 """
-from simpleeval import SimpleEval
+import simpleeval
 from contextlib import contextmanager
 
 from .tags import MainNode
@@ -38,13 +38,13 @@ class Context:
             ....
 
     """
-    evaluator_class = SimpleEval
+    evaluator_class = simpleeval.SimpleEval
     functions = {}
 
     def __init__(self, data={}):
         self.stack = [data]
         self.children = []
-        self.evaluator = SimpleEval(names=self.name_handler, functions=self.functions)
+        self.evaluator = self.evaluator_class(names=self.name_handler, functions=self.functions)
 
     def name_handler(self, node):
         name = node.id
@@ -53,6 +53,7 @@ class Context:
                 return ctx[name]
             except KeyError:
                 pass
+
         raise NameError(name)
 
     def child(self):
@@ -82,7 +83,10 @@ class Context:
         self.stack.pop()
 
     def eval(self, expr):
-        return self.evaluator.eval(expr.lstrip())
+        try:
+            return self.evaluator.eval(expr.lstrip())
+        except simpleeval.AttributeDoesNotExist as e:
+            return "??{}??".format(e.expression)
 
 
 def flatten(l):

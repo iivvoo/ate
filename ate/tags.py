@@ -106,7 +106,6 @@ class BlockStatementNode(StatementNode):
         closing = self.closing
         closing_found = closing is None
 
-        # import pdb; pdb.set_trace()
         while index < len(code):
             first_marker = self.find_start_block(code[index:])
 
@@ -237,6 +236,7 @@ class SlotStatementNode(BlockStatementNode):
             for node in self.nodes:
                 res.append(node.render(context))
         return res
+
 
 registry = Registry()
 
