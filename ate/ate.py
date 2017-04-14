@@ -87,6 +87,8 @@ class Context:
             return self.evaluator.eval(expr.lstrip())
         except simpleeval.AttributeDoesNotExist as e:
             return "??{}??".format(e.expression)
+        except TypeError as e:
+            return "!!{}!!".format(e)
 
 
 def flatten(l):
